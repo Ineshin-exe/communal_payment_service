@@ -1,77 +1,67 @@
 from rest_framework.decorators import api_view
-from rest_framework.exceptions import ValidationError
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
-from communal.models.models import Record, UtilityMeter
+from communal.models.models import UtilityMeter
 from communal.serializers import UtilityMeterSerializer, RecordSerializer
 
 
 @api_view(['POST'])
 def set_utility_meter_values(request):
+    serializer = RecordSerializer(data=request.data)
+    serializer.context['user'] = request.user
 
-    meters_list = request.user.customer.utility_meters.all()
-
-    serializer = UtilityMeterSerializer(data=request.data)
-    serializer.is_valid()
-    current_meter = meters_list.get(type=serializer.data['type'])
-
-    serializer_record = RecordSerializer(data=request.data)
-
-    if serializer_record.is_valid(raise_exception=True):
-        serializer_record.validated_data['utility_meter'] = current_meter
-
-        print(serializer_record.validated_data)
-
-        if Record.objects.filter(utility_meter=current_meter).exists():
-            if serializer_record.validated_data['value'] < Record.objects.filter(utility_meter=current_meter).first().value:
-                raise ValidationError('ТЫ КУДА ВОДУ СКРУТИЛ')
-
-        print(serializer_record.validated_data)
-        serializer_record.save()
-
-    return Response(serializer_record.data)
-
-
-@api_view(['GET'])
-def utility_meter_history(request):
-
-    meters_list = request.user.customer.utility_meters.all()
-    data = []
-
-    for meter in meters_list:
-        data += meter.records.all()
-
-    print(data)
-
-    serializer = RecordSerializer(many=True, data=data)
-
-    serializer.is_valid()
+    if serializer.is_valid(raise_exception=True):
+        serializer.save()
 
     return Response(serializer.data)
 
 
 @api_view(['GET'])
+def utility_meter_history(request):
+
+    paginator = PageNumberPagination()
+    paginator.page_size = 20
+
+    meters_list = request.user.customer.utility_meters.all()
+    data = []
+    for meter in meters_list:
+        data += meter.records.all()
+
+    result_page = paginator.paginate_queryset(data, request)
+    serializer = RecordSerializer(data=result_page, many=True)
+    serializer.is_valid()
+
+    return paginator.get_paginated_response(serializer.data)
+
+
+@api_view(['GET'])
 def debtors(request):
 
-    query = request.query_params
+    paginator = PageNumberPagination()
+    paginator.page_size = 20
 
-    month = query['month']
-    year = query['year']
+    month = request.query_params['month']
+    year = request.query_params['year']
 
-    um = UtilityMeter.objects.all()
-
+    meters = UtilityMeter.objects.all().order_by('customer')
     data = []
+    for meter in meters:
+        if not meter.records.filter(date__year=year, date__month=month).exists():
+            data.append(meter)
 
-    for item in um:
-        if not item.records.filter(date__year=year, date__month=month).exists():
-            data.append(item)
-            print(item)
-            print(um)
-
-    print(data)
-
-    serializer = UtilityMeterSerializer(many=True, data=data)
-
+    result_page = paginator.paginate_queryset(data, request)
+    serializer = UtilityMeterSerializer(data=result_page, many=True)
     serializer.is_valid()
+
+    return paginator.get_paginated_response(serializer.data)
+
+
+@api_view(['POST'])
+def create_utility_meter(request):
+    serializer = UtilityMeterSerializer(data=request.data)
+
+    if serializer.is_valid(raise_exception=True):
+        serializer.save()
 
     return Response(serializer.data)

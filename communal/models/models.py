@@ -21,6 +21,11 @@ class UtilityMeter(BaseModel):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='utility_meters')
     type = models.CharField(max_length=32, choices=UtilityMeterType.choices, default=None)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['customer', 'type'], name='customer_type')
+        ]
+
     def __str__(self):
         return f"Apartment: {self.customer.apartment}, Type: {self.type}"
 
@@ -35,10 +40,7 @@ class Record(BaseModel):
 
     @property
     def delta(self):
-        try:
-            return self.value - Record.objects.filter(value__lte=self.value).exclude(id=self.id).first().value
-        except AttributeError:
-            return self.value
+        return self.value - Record.objects.filter(value__lte=self.value).exclude(id=self.id).first().value
 
     def __str__(self):
         return f"Meter: {self.utility_meter.__str__()} \n Date: {self.date}, Value: {self.value}"
