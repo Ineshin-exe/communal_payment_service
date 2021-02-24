@@ -7,8 +7,7 @@ from rest_framework import serializers
 from communal.models.choices import UtilityMeterType
 from communal.models.common import BaseModel
 from communal.models.models import UtilityMeter, Record, Customer
-from communal.service import validate_utility_meter_data, validate_create_meter, validate_create_record, \
-    get_current_meter
+from communal.service import validate_utility_meter_data, validate_create_meter, get_current_meter
 
 
 class BaseModelSerializer(serializers.ModelSerializer):
@@ -52,7 +51,7 @@ class RecordSerializer(BaseModelSerializer):
         }
 
     def create(self, validated_data):
-        data = self.initial_data()
+        data = self.initial_data
         user = self.context['user']
 
         current_meter = get_current_meter(data, user)

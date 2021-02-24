@@ -5,10 +5,6 @@ from communal.models.choices import UtilityMeterType
 from communal.models.common import BaseModel, SingletonModel
 
 
-class Manager(SingletonModel):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='manager')
-
-
 class Customer(BaseModel):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='customer')
     apartment = models.CharField(max_length=8)

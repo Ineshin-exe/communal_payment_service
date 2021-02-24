@@ -1,5 +1,7 @@
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 
 from communal.models.models import UtilityMeter
@@ -7,6 +9,7 @@ from communal.serializers import UtilityMeterSerializer, RecordSerializer
 
 
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def set_utility_meter_values(request):
     serializer = RecordSerializer(data=request.data)
     serializer.context['user'] = request.user
@@ -14,10 +17,13 @@ def set_utility_meter_values(request):
     if serializer.is_valid(raise_exception=True):
         serializer.save()
 
+    if request.user.is_staff:
+        raise ValidationError('Вы не можете подавать данные')
     return Response(serializer.data)
 
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def utility_meter_history(request):
 
     paginator = PageNumberPagination()
@@ -36,6 +42,7 @@ def utility_meter_history(request):
 
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated, IsAdminUser])
 def debtors(request):
 
     paginator = PageNumberPagination()
@@ -58,6 +65,7 @@ def debtors(request):
 
 
 @api_view(['POST'])
+@permission_classes([IsAuthenticated, IsAdminUser])
 def create_utility_meter(request):
     serializer = UtilityMeterSerializer(data=request.data)
 
