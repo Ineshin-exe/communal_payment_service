@@ -11,14 +11,14 @@ def validate_utility_meter_data(validated_data, meter):
 
 def _check_less_than_previous(validated_data, meter):
     if Record.objects.filter(utility_meter=meter, value__gt=validated_data['value']).exists():
-        raise ValidationError('ТЫ КУДА ВОДУ СКРУТИЛ?')
+        raise ValidationError('Показатели не могут быть ниже чем в предыдущем месяце.')
 
 
 def _check_value_already_exists(validated_data, meter):
     date = validated_data['date']
 
     if Record.objects.filter(utility_meter=meter, date__year=date.year, date__month=date.month).exists():
-        raise ValidationError('ТЫ УЖЕ ПОДАЛ')
+        raise ValidationError('Вы уже подали данные этого счетчика в этом месяце.')
 
 
 def get_current_meter(data, user):
@@ -27,7 +27,7 @@ def get_current_meter(data, user):
     try:
         return meters.get(type=data['type'])
     except UtilityMeter.DoesNotExist:
-        raise ValidationError('У вас нет такого счетчика')
+        raise ValidationError('У вас нет такого счетчика.')
 
 
 def validate_create_meter(validated_data, data):
@@ -35,7 +35,7 @@ def validate_create_meter(validated_data, data):
     customer = _check_register_customer(data)
 
     if UtilityMeter.objects.filter(customer=customer, type=utility_type).exists():
-        raise ValidationError('Такой счетчик у этого пользователя уже установлен')
+        raise ValidationError('Такой счетчик у этого пользователя уже установлен.')
 
     return customer, utility_type
 

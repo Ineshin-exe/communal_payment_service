@@ -17,8 +17,6 @@ def set_utility_meter_values(request):
     if serializer.is_valid(raise_exception=True):
         serializer.save()
 
-    if request.user.is_staff:
-        raise ValidationError('Вы не можете подавать данные')
     return Response(serializer.data)
 
 
