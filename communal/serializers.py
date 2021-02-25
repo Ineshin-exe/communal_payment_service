@@ -49,6 +49,11 @@ class RecordSerializer(BaseModelSerializer):
             'utility_meter': {'required': False},
             'date': {'required': False},
         }
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+
+        data['utility_meter'] = UtilityMeterSerializer(instance=instance.utility_meter).data
+        return data
 
     def create(self, validated_data):
         data = self.initial_data
