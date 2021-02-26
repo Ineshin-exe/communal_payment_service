@@ -96,7 +96,7 @@ class UtilityMeterSerializer(BaseModelSerializer):
         return data
 
     def create(self, validated_data):
-        data = self.initial_data()
+        data = self.initial_data
 
         customer, utility_type = validate_create_meter(validated_data, data)
 
